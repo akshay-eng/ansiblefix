@@ -42,7 +42,7 @@
       ansible.builtin.wait_for:
         timeout: 30
 
-    - name: Create app-review pod using a container from image var with memory resource request 150Mi and limit as 200Mi and var command and args
+    - name: Create app-review pod using a container from image var with memory resource request and limit as vars
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -58,8 +58,8 @@
                 image: "{{ image }}"
                 resources:
                   requests:
-                    memory: 150Mi
+                    memory: "{{ memory_request }}"
                   limits:
-                    memory: 200Mi
+                    memory: "{{ memory_limit }}"
                 command: "{{ command }}"
                 args: "{{ args }}"
