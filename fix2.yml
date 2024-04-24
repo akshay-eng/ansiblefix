@@ -1,4 +1,3 @@
----
 - name: Scale up resources
   hosts: 172.17.204.8
   vars:
@@ -10,6 +9,8 @@
     name: app-review
     image: polinux/stress
     kubeconfig_path: "~/.kube/config"
+    memory_request: "{{ memory_request }}"
+    memory_limit: "{{ memory_limit }}"
 
   tasks:
     - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
