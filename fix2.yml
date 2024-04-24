@@ -16,57 +16,57 @@
     kubeconfig_path: "~/.kube/config"
 
   tasks:
-  - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
-    kubernetes.core.k8s_info:
-      kubeconfig: "{{ kubeconfig_path }}"
-      api_version: v1
-      kind: Pod
-      label_selectors:
-        - app=robot-shop
-      namespace: "{{ namespace }}"
-      name: app-review
-    register: pod_info
-
-  - name: Display the pod_info
-    ansible.builtin.debug:
-      var: pod_info
-
-  - name: Delete pod app-review in robot-shop namespace
-    kubernetes.core.k8s:
-      kubeconfig: "{{ kubeconfig_path }}"
-      state: absent
-      api_version: v1
-      kind: Pod
-      label_selectors:
-        - app=robot-shop
-      namespace: "{{ namespace }}"
-      name: app-review
-
-  - name: Wait for 30 sec
-    ansible.builtin.wait_for:
-      timeout: 30
-
-  - name: Create app-review pod using a container from image var with memory resource request and limit as vars
-    kubernetes.core.k8s:
-      kubeconfig: "{{ kubeconfig_path }}"
-      state: present
-      definition:
-        apiVersion: v1
+    - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig_path }}"
+        api_version: v1
         kind: Pod
-        metadata:
-          name: app-review
-          namespace: "{{ namespace }}"
-        spec:
-          containers:
-            - name: app-review
-              image: "{{ image }}"
-              resources:
-                requests:
-                  memory: "{{ memory_request }}"
-                limits:
-                  memory: "{{ memory_limit }}"
-              command: "{{ command }}"
-              args: "{{ args }}"
-    vars:
-      memory_request: "{{ lookup('env', 'memory_request') }}"
-      memory_limit: "{{ lookup('env', 'memory_limit') }}"
+        label_selectors:
+          - app=robot-shop
+        namespace: "{{ namespace }}"
+        name: app-review
+      register: pod_info
+
+    - name: Display the pod_info
+      ansible.builtin.debug:
+        var: pod_info
+
+    - name: Delete pod app-review in robot-shop namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: absent
+        api_version: v1
+        kind: Pod
+        label_selectors:
+          - app=robot-shop
+        namespace: "{{ namespace }}"
+        name: app-review
+
+    - name: Wait for 30 sec
+      ansible.builtin.wait_for:
+        timeout: 30
+
+    - name: Create app-review pod using a container from image var with memory resource request and limit as vars
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: app-review
+            namespace: "{{ namespace }}"
+          spec:
+            containers:
+              - name: app-review
+                image: "{{ image }}"
+                resources:
+                  requests:
+                    memory: "{{ memory_request }}"
+                  limits:
+                    memory: "{{ memory_limit }}"
+                command: "{{ command }}"
+                args: "{{ args }}"
+      vars:
+        memory_request: "{{ extra_vars.memory_request }}"
+        memory_limit: "{{ extra_vars.memory_limit }}"
