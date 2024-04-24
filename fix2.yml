@@ -3,19 +3,24 @@
   hosts: 172.17.204.8
   vars:
     namespace: robot-shop
-    command: "stress"
-    args:
-      - "--vm"
-      - "1"
-      - "--vm-bytes"
-      - "150M"
-      - "--vm-hang"
-      - "1"
+    command:
+      - "stress"
     label: "app: robot-shop"
+    name: app-review
     image: polinux/stress
     kubeconfig_path: "~/.kube/config"
 
   tasks:
+    - name: Extract extra_vars from POST request body
+      set_fact:
+        extra_vars: "{{ request_body | default({}) }}"
+      when: request_body is defined
+
+    - name: Get memory_request and memory_limit from extra_vars
+      set_fact:
+        memory_request: "{{ extra_vars.memory_request }}"
+        memory_limit: "{{ extra_vars.memory_limit }}"
+
     - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
       kubernetes.core.k8s_info:
         kubeconfig: "{{ kubeconfig_path }}"
@@ -46,7 +51,7 @@
       ansible.builtin.wait_for:
         timeout: 30
 
-    - name: Create app-review pod using a container from image var with memory resource request and limit as vars
+    - name: Create app-review pod using a container from image var with dynamic memory resource request and limit
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -66,7 +71,3 @@
                   limits:
                     memory: "{{ memory_limit }}"
                 command: "{{ command }}"
-                args: "{{ args }}"
-      vars:
-        memory_request: "{{ extra_vars.memory_request }}"
-        memory_limit: "{{ extra_vars.memory_limit }}"
