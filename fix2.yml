@@ -1,25 +1,28 @@
+---
 - name: Scale up resources
   hosts: 172.17.204.8
   vars:
     namespace: robot-shop
     command:
       - "stress"
-    args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
+    args:
+      - "--vm"
+      - "1"
+      - "--vm-bytes"
+      - "150M"
+      - "--vm-hang"
+      - "1"
     label: "app: robot-shop"
     name: app-review
     image: polinux/stress
     kubeconfig_path: "~/.kube/config"
-    memory_request: "{{ memory_request }}"
-    memory_limit: "{{ memory_limit }}"
 
   tasks:
-    - name: Debug - Print memory_request variable
-      ansible.builtin.debug:
-        msg: "Memory Request: {{ memory_request }}"
-
-    - name: Debug - Print memory_limit variable
-      ansible.builtin.debug:
-        msg: "Memory Limit: {{ memory_limit }}"
+    - name: Set memory_request and memory_limit variables from extra_vars
+      set_fact:
+        memory_request: "{{ ansible_facts.extra_vars.memory_request }}"
+        memory_limit: "{{ ansible_facts.extra_vars.memory_limit }}"
+      when: ansible_facts.extra_vars.memory_request is defined and ansible_facts.extra_vars.memory_limit is defined
 
     - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
       kubernetes.core.k8s_info:
