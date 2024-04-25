@@ -19,8 +19,8 @@
 
     - name: Get memory_request and memory_limit from extra_vars
       set_fact:
-        memory_request: "{{ extra_vars.memory_request | default('150Mi') }}"
-        memory_limit: "{{ extra_vars.memory_limit | default('200Mi') }}"
+        memory_request: "{{ extra_vars.memory_request }}"
+        memory_limit: "{{ extra_vars.memory_limit }}"
 
     - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
       kubernetes.core.k8s_info:
