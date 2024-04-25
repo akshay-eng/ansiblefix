@@ -5,6 +5,7 @@
     namespace: robot-shop
     command:
       - "stress"
+    args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
     label: "app: robot-shop"
     name: app-review
     image: polinux/stress
@@ -60,7 +61,7 @@
       ansible.builtin.wait_for:
         timeout: 30
 
-    - name: Create app-review pod using a container from image var with dynamic memory resource request and limit
+    - name: Create app-review pod using a container from image var with dynamic memory resource request, limit, command, and args
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -80,3 +81,4 @@
                   limits:
                     memory: "{{ memory_limit }}"
                 command: "{{ command }}"
+                args: "{{ args }}"
