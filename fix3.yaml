@@ -1,0 +1,84 @@
+---
+- name: Scale up resources
+  hosts: 172.17.204.8
+  vars:
+    namespace: robot-shop
+    command:
+      - "stress"
+    args: ["--vm", "1", "--vm-bytes", "150M", "--vm-hang", "1"]
+    label: "app: robot-shop"
+    name: app-review
+    image: polinux/stress
+    kubeconfig_path: "~/.kube/config"
+
+  tasks:
+    - name: Convert extra_vars string to dictionary
+      set_fact:
+        extra_vars_dict: "{{ extra_vars | from_json }}"
+      when: extra_vars is defined
+
+    - name: Debug extra_vars_dict
+      ansible.builtin.debug:
+        var: extra_vars_dict
+
+    - name: Get memory_request and memory_limit from extra_vars_dict
+      set_fact:
+        memory_request: "{{ extra_vars_dict.memory_request }}"
+        memory_limit: "{{ extra_vars_dict.memory_limit }}"
+      when: extra_vars_dict is defined
+
+    - name: Debug memory_request and memory_limit values
+      ansible.builtin.debug:
+        msg: "Memory Request: {{ memory_request }}, Memory Limit: {{ memory_limit }}"
+
+    - name: Get the status of app-review pod in robot-shop namespace and register output in var pod_info
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig_path }}"
+        api_version: v1
+        kind: Pod
+        label_selectors:
+          - app=robot-shop
+        namespace: "{{ namespace }}"
+        name: app-review
+      register: pod_info
+
+    - name: Display the pod_info
+      ansible.builtin.debug:
+        var: pod_info
+
+    - name: Delete pod app-review in robot-shop namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: absent
+        api_version: v1
+        kind: Pod
+        label_selectors:
+          - app=robot-shop
+        namespace: "{{ namespace }}"
+        name: app-review
+
+    - name: Wait for 30 sec
+      ansible.builtin.wait_for:
+        timeout: 30
+
+    - name: Create app-review pod using a container from image var with dynamic memory resource request, limit, command, and args
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: app-review
+            namespace: "{{ namespace }}"
+          spec:
+            containers:
+              - name: app-review
+                image: "{{ image }}"
+                resources:
+                  requests:
+                    memory: "{{ memory_request }}"
+                  limits:
+                    memory: "{{ memory_limit }}"
+                command: "{{ command }}"
+                args: "{{ args }}"
