@@ -1,6 +1,6 @@
 ---
 - name: Scale up resources
-  hosts: localhost
+  hosts: 10.0.224.228
   vars:
     namespace: robot-shop
     command:
